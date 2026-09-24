@@ -8,6 +8,7 @@ const bcrypt = require("bcryptjs");
 const { Pool } = require("pg");
 
 const app = express();
+app.set("trust proxy", 1);
 const PORT = process.env.PORT || 3000;
 const DATABASE_URL = String(process.env.DATABASE_URL || "").trim();
 
@@ -95,20 +96,46 @@ async function initDatabase() {
     console.log(`Central admin created: ${adminUsername}`);
   }
 
-  // Keep the default catalogue self-healing. Older deployments could have
-  // recorded the seed flag before the 16 modules were inserted. On every
-  // startup, add any missing default module without overwriting admin edits.
+  const seeded = await pool.query("SELECT value FROM system_settings WHERE key = 'initial_modules_seeded'");
+  if (seeded.rowCount === 0) {
+    const moduleCount = Number((await pool.query("SELECT COUNT(*) AS count FROM modules")).rows[0].count);
+    if (moduleCount === 0) {
+      for (const module of defaultModules) {
+        await pool.query(
+          "INSERT INTO modules (name, slug, category, icon, url, active) VALUES ($1, $2, $3, $4, $5, TRUE) ON CONFLICT DO NOTHING",
+          module
+        );
+      }
+    }
+    await pool.query("INSERT INTO system_settings (key, value) VALUES ('initial_modules_seeded', '1') ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value");
+  }
+}
+
+
+  // Repair older databases where seeded module URLs were saved blank.
   for (const module of defaultModules) {
     await pool.query(
-      "INSERT INTO modules (name, slug, category, icon, url, active) VALUES ($1, $2, $3, $4, $5, TRUE) ON CONFLICT (name) DO NOTHING",
-      module
+      "UPDATE modules SET url=$1, category=$2, icon=$3, active=TRUE WHERE slug=$4 AND (url IS NULL OR btrim(url)='')",
+      [module[4], module[2], module[3], module[1]]
     );
   }
 
-  await pool.query(
-    "INSERT INTO system_settings (key, value) VALUES ('initial_modules_seeded', '1') ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value"
+  // Standard Angul workplace account and its original module access.
+  const angulHash = bcrypt.hashSync("12345", 12);
+  const angulResult = await pool.query(
+    "INSERT INTO users (username,password_hash,role,active) VALUES ('Angul',$1,'user',TRUE) ON CONFLICT (username) DO UPDATE SET active=TRUE RETURNING id",
+    [angulHash]
   );
-}
+  const angul = angulResult.rows[0] || (await pool.query("SELECT id FROM users WHERE username='Angul'")).rows[0];
+  if (angul) {
+    const allowed = new Set(["doc-pdf","pack-truck-doc","driver-details","leave","angul-ddr"]);
+    const mods = await pool.query("SELECT id,slug FROM modules WHERE active=TRUE");
+    for (const m of mods.rows) {
+      if (allowed.has(m.slug)) {
+        await pool.query("INSERT INTO permissions (user_id,module_id) VALUES ($1,$2) ON CONFLICT DO NOTHING", [angul.id,m.id]);
+      }
+    }
+  }
 
 function q(text, params = []) { return pool.query(text, params); }
 
@@ -140,7 +167,7 @@ app.use(session({
   secret: process.env.SESSION_SECRET || "development-only-change-me",
   resave: false,
   saveUninitialized: false,
-  cookie: { httpOnly: true, sameSite: "lax", secure: false, maxAge: 8 * 60 * 60 * 1000 }
+  cookie: { httpOnly: true, sameSite: "lax", secure: process.env.NODE_ENV === "production", maxAge: 8 * 60 * 60 * 1000 }
 }));
 app.use(express.static(path.join(__dirname, "public")));
 

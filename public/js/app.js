@@ -196,56 +196,37 @@ $("#adminLogoutBtn").onclick = logout;
 $("#userLogoutBtn").onclick = logout;
 
 // ---------------- EMBEDDED MODULE VIEWER ----------------
+function isValidHttpUrl(value) {
+  try { const u = new URL(String(value || "").trim()); return u.protocol === "http:" || u.protocol === "https:"; }
+  catch (_) { return false; }
+}
 function openModuleViewer(module) {
-  if (!module || !module.url) return toast("This module has no valid URL.");
+  if (!module || !isValidHttpUrl(module.url)) return toast("This module has no valid URL. Ask the administrator to edit the module URL.");
   currentModule = module;
   $("#viewerModuleName").textContent = module.name;
   $("#moduleLoadingUrl").textContent = module.url;
   $("#moduleLoading").classList.remove("hidden");
   $("#moduleViewer").classList.remove("hidden");
   document.body.classList.add("module-view-open");
-  const webview = $("#moduleWebview");
-  webview.src = module.url;
+  const frame = $("#moduleWebview");
+  frame.onload = () => $("#moduleLoading").classList.add("hidden");
+  frame.onerror = () => { $("#moduleLoading").classList.add("hidden"); toast("Module could not be embedded. Use Open in Browser."); };
+  frame.src = module.url;
 }
-
 function closeModuleViewer() {
   currentModule = null;
   const viewer = $("#moduleViewer");
   if (!viewer) return;
   viewer.classList.add("hidden");
   document.body.classList.remove("module-view-open");
-  const webview = $("#moduleWebview");
-  if (webview) {
-    try { webview.stop(); } catch (_) {}
-  }
+  const frame = $("#moduleWebview");
+  if (frame) frame.src = "about:blank";
 }
-
 $("#moduleBackBtn").onclick = closeModuleViewer;
-$("#moduleRefreshBtn").onclick = () => {
-  const webview = $("#moduleWebview");
-  if (webview) webview.reload();
-};
+$("#moduleRefreshBtn").onclick = () => { const frame = $("#moduleWebview"); if (frame) frame.src = frame.src; };
 $("#moduleExternalBtn").onclick = () => {
-  if (currentModule?.url) {
-    if (window.krcDesktop?.openExternal) window.krcDesktop.openExternal(currentModule.url);
-    else window.open(currentModule.url, "_blank");
-  }
+  if (currentModule?.url && isValidHttpUrl(currentModule.url)) window.open(currentModule.url, "_blank", "noopener,noreferrer");
 };
-
-const moduleWebview = $("#moduleWebview");
-moduleWebview.addEventListener("did-start-loading", () => $("#moduleLoading").classList.remove("hidden"));
-moduleWebview.addEventListener("did-stop-loading", () => $("#moduleLoading").classList.add("hidden"));
-moduleWebview.addEventListener("did-fail-load", (e) => {
-  if (e.errorCode === -3) return;
-  $("#moduleLoading").classList.add("hidden");
-  toast(`Module could not be loaded: ${e.errorDescription || "Unknown error"}`);
-});
-moduleWebview.addEventListener("new-window", (e) => {
-  // Keep links/popups inside the same KRC GROUP module viewer.
-  e.preventDefault();
-  if (e.url) moduleWebview.src = e.url;
-});
-
 // ---------------- ADMIN ----------------
 async function loadDashboard() {
   try {
