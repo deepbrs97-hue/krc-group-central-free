@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>KRC GROUP</title>
+  <link rel="stylesheet" href="/css/app.css">
+</head>
+<body>
+  <div id="toast" class="toast"></div>
+
+  <section id="loginView" class="login-shell">
+    <div class="login-card">
+      <img class="krc-logo login-logo" src="/assets/krc-logo.jpeg" alt="KRC Logo">
+      <div class="eyebrow">SECURE PORTAL</div>
+      <h1>KRC GROUP</h1>
+      <p class="muted">Sign in to continue to your workspace.</p>
+      <form id="loginForm" class="form-stack">
+        <label>Username
+          <input id="username" autocomplete="username" required>
+        </label>
+        <label>Password
+          <div class="password-wrap">
+            <input id="password" type="password" autocomplete="current-password" required>
+            <button type="button" class="ghost-btn" id="togglePassword">Show</button>
+          </div>
+        </label>
+        <button class="primary-btn" type="submit">Sign in</button>
+        <p id="loginError" class="error-text"></p>
+      </form>
+    </div>
+  </section>
+
+  <!-- ADMIN -->
+  <section id="adminView" class="app-shell hidden">
+    <aside class="sidebar">
+      <div class="sidebar-brand">
+        <img class="krc-logo sidebar-logo" src="/assets/krc-logo.jpeg" alt="KRC Logo">
+        <div><strong>KRC GROUP</strong><span>Admin Control</span></div>
+      </div>
+      <nav>
+        <button class="nav-item active" data-section="dashboard">Dashboard</button>
+        <button class="nav-item" data-section="users">Users</button>
+        <button class="nav-item" data-section="permissions">Permissions</button>
+        <button class="nav-item" data-section="modules">Modules</button>
+        <button class="nav-item" data-section="activity">Activity Log</button>
+      </nav>
+      <button id="adminLogoutBtn" class="logout-btn">Logout</button>
+    </aside>
+
+    <main class="main">
+      <header class="topbar">
+        <div><div class="eyebrow">ADMINISTRATION</div><h2 id="pageTitle">Dashboard</h2></div>
+        <div class="admin-chip"><span class="status-dot"></span><div><strong id="adminName">admin</strong><small>Administrator</small></div></div>
+      </header>
+
+      <section id="dashboard" class="page-section active-section dashboard-page">
+        <div class="dashboard-hero">
+          <div class="dashboard-hero-copy">
+            <span class="dashboard-kicker">KRC &amp; BRS · ADMINISTRATION</span>
+            <h1>Welcome back, <span id="dashboardWelcomeName">Admin</span></h1>
+            <p>Manage users, permissions and business modules from one central workspace.</p>
+          </div>
+          <div class="dashboard-date-card">
+            <div class="analog-clock" id="adminAnalogClock" aria-label="Current time">
+              <span class="clock-hand clock-hour"></span>
+              <span class="clock-hand clock-minute"></span>
+              <span class="clock-hand clock-second"></span>
+              <span class="clock-center"></span>
+            </div>
+            <div class="date-card-copy">
+              <span>Today</span>
+              <strong id="dashboardDate">—</strong>
+              <small id="dashboardTime">Current time</small>
+            </div>
+          </div>
+        </div>
+
+        <div class="stats-grid dashboard-stats">
+          <div class="stat-card stat-users">
+            <div class="stat-top"><span class="stat-icon">US</span><span class="stat-label">Users</span></div>
+            <strong id="totalUsers">0</strong>
+            <small>Total registered accounts</small>
+          </div>
+          <div class="stat-card stat-active">
+            <div class="stat-top"><span class="stat-icon">AC</span><span class="stat-label">Active Users</span></div>
+            <strong id="activeUsers">0</strong>
+            <small>Currently enabled accounts</small>
+          </div>
+          <div class="stat-card stat-modules">
+            <div class="stat-top"><span class="stat-icon">MD</span><span class="stat-label">Active Modules</span></div>
+            <strong id="totalModules">0</strong>
+            <small>Available business modules</small>
+          </div>
+          <div class="stat-card stat-activity">
+            <div class="stat-top"><span class="stat-icon">LG</span><span class="stat-label">Recent Events</span></div>
+            <strong id="recentEventCount">0</strong>
+            <small>Latest recorded activities</small>
+          </div>
+        </div>
+
+        <div class="dashboard-content-grid">
+          <div class="panel dashboard-modules-panel">
+            <div class="panel-head dashboard-panel-head">
+              <div><span class="section-kicker">QUICK ACCESS</span><h3>Business Modules</h3><p>Open an active module directly inside KRC &amp; BRS.</p></div>
+              <button class="panel-link-btn" data-section-jump="modules">Manage Modules&nbsp; →</button>
+            </div>
+            <div id="adminQuickModules" class="quick-module-grid"></div>
+          </div>
+
+          <div class="panel dashboard-activity-panel">
+            <div class="panel-head dashboard-panel-head">
+              <div><span class="section-kicker">AUDIT TRAIL</span><h3>Recent Activity</h3><p>Latest administrative changes</p></div>
+              <button class="panel-link-btn" data-section-jump="activity">View All&nbsp; →</button>
+            </div>
+            <div id="recentLogs" class="activity-list dashboard-activity-list"></div>
+          </div>
+        </div>
+      </section>
+
+      <section id="users" class="page-section">
+        <div class="panel">
+          <div class="panel-head"><div><h3>User Management</h3><p>Create and manage system accounts.</p></div><button id="addUserBtn" class="primary-btn">+ Add User</button></div>
+          <div class="toolbar"><input id="userSearch" placeholder="Search users..."></div>
+          <div class="table-wrap"><table><thead><tr><th>User</th><th>Role</th><th>Status</th><th>Created</th><th>Actions</th></tr></thead><tbody id="usersTable"></tbody></table></div>
+        </div>
+      </section>
+
+      <section id="permissions" class="page-section">
+        <div class="panel">
+          <div class="panel-head"><div><h3>Permission Management</h3><p>Choose exactly which modules each user can access.</p></div></div>
+          <div class="permission-layout">
+            <div><label>Select User<select id="permissionUser"></select></label><div id="permissionUserMeta" class="selection-card">Select a user to manage access.</div></div>
+            <div id="permissionGrid" class="permission-grid"></div>
+          </div>
+          <div class="panel-footer"><button id="savePermissionsBtn" class="primary-btn">Save Permissions</button></div>
+        </div>
+      </section>
+
+      <section id="modules" class="page-section">
+        <div class="panel"><div class="panel-head"><div><h3>Modules</h3><p>Manage, edit, delete and open your available web modules.</p></div><button id="addModuleBtn" class="primary-btn">+ Add Module</button></div><div id="modulesList" class="module-list"></div></div>
+      </section>
+
+      <section id="activity" class="page-section">
+        <div class="panel"><div class="panel-head"><div><h3>Activity Log</h3><p>Administrative actions recorded by the system.</p></div></div><div class="table-wrap"><table><thead><tr><th>Time</th><th>Admin</th><th>Action</th><th>Details</th></tr></thead><tbody id="activityTable"></tbody></table></div></div>
+      </section>
+    </main>
+  </section>
+
+  <!-- NORMAL USER -->
+  <section id="userView" class="user-app-shell hidden">
+    <aside class="user-sidebar">
+      <div class="user-sidebar-brand">
+        <img class="krc-logo user-sidebar-logo" src="/assets/krc-logo.jpeg" alt="KRC Logo">
+        <div><strong>KRC GROUP</strong><span>User Workplace</span></div>
+      </div>
+
+      <div class="user-profile-card">
+        <div class="user-avatar" id="userAvatar">U</div>
+        <div class="user-profile-copy">
+          <strong id="sidebarUserName">User</strong>
+          <span>Standard User</span>
+        </div>
+        <span class="user-online-dot"></span>
+      </div>
+
+      <div class="user-nav-label">WORKSPACE</div>
+      <nav class="user-nav">
+        <button class="user-nav-item active" data-user-section="userDashboard"><span class="nav-symbol">⌂</span><span>Dashboard</span></button>
+        <button class="user-nav-item" data-user-section="userModulesSection"><span class="nav-symbol">▦</span><span>My Modules</span><span id="sidebarModuleCount" class="nav-count">0</span></button>
+      </nav>
+
+      <div class="user-sidebar-footer">
+        <div class="user-access-note"><span class="status-dot"></span><div><strong>Access Level</strong><small id="userAccessLevel">User</small></div></div>
+        <button id="userLogoutBtn" class="user-logout-btn"><span>↪</span> Logout</button>
+      </div>
+    </aside>
+
+    <main class="user-main-shell">
+      <header class="user-main-topbar">
+        <div>
+          <div class="eyebrow">USER WORKPLACE</div>
+          <h2 id="userPageTitle">Dashboard</h2>
+        </div>
+        <div class="user-top-account">
+          <div class="user-top-avatar" id="userTopAvatar">U</div>
+          <div><strong id="userTopName">User</strong><small>Signed in</small></div>
+        </div>
+      </header>
+
+      <section id="userDashboard" class="user-page-section active-user-section">
+        <div class="user-welcome-card">
+          <div class="user-welcome-copy">
+            <span class="dashboard-kicker">KRC &amp; BRS · WORKPLACE</span>
+            <h1>Welcome back, <span id="userWelcomeName">User</span></h1>
+            <p>Your assigned business modules are ready to access from this secure workspace.</p>
+          </div>
+          <div class="user-welcome-side">
+            <div class="user-welcome-meta"><span>Access Level</span><strong id="userWelcomeAccess">User</strong><small>Authorized workspace</small></div>
+            <div class="user-date-card">
+              <div class="analog-clock" id="userAnalogClock" aria-label="Current time">
+                <span class="clock-hand clock-hour"></span>
+                <span class="clock-hand clock-minute"></span>
+                <span class="clock-hand clock-second"></span>
+                <span class="clock-center"></span>
+              </div>
+              <div class="date-card-copy">
+                <span>Today</span>
+                <strong id="userDashboardDate">—</strong>
+                <small id="userDashboardTime">Current time</small>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="user-summary-grid">
+          <div class="user-summary-card"><span class="summary-icon">▦</span><div><strong id="userModuleStat">0</strong><small>Assigned Modules</small></div></div>
+          <div class="user-summary-card"><span class="summary-icon">✓</span><div><strong>Active</strong><small>Account Status</small></div></div>
+          <div class="user-summary-card"><span class="summary-icon">◉</span><div><strong>Secure</strong><small>Workspace Access</small></div></div>
+        </div>
+
+        <div class="user-section-head">
+          <div><span class="section-kicker">QUICK ACCESS</span><h3>My Modules</h3><p>Open the business modules assigned to your account.</p></div>
+          <button class="user-view-all" data-user-section-jump="userModulesSection">View all →</button>
+        </div>
+        <div id="userDashboardModules" class="user-module-grid user-dashboard-grid"></div>
+      </section>
+
+      <section id="userModulesSection" class="user-page-section">
+        <div class="user-section-head">
+          <div><span class="section-kicker">ACCESS CATALOGUE</span><h3>My Modules</h3><p>Only modules assigned by your administrator are shown here.</p></div>
+          <span id="moduleCount" class="count-pill">0 modules</span>
+        </div>
+        <div id="userModules" class="user-module-grid"></div>
+      </section>
+    </main>
+  </section>
+
+  <section id="moduleViewer" class="module-viewer hidden">
+    <header class="module-viewer-bar">
+      <div class="module-viewer-brand"><img class="krc-logo viewer-logo" src="/assets/krc-logo.jpeg" alt="KRC Logo"><div><strong>KRC GROUP</strong><span id="viewerModuleName">Module</span></div></div>
+      <div class="module-viewer-actions">
+        <button id="moduleBackBtn" class="viewer-btn">← Back</button>
+        <button id="moduleRefreshBtn" class="viewer-btn">↻ Refresh</button>
+        <button id="moduleExternalBtn" class="viewer-btn">↗ Open in Browser</button>
+      </div>
+    </header>
+    <div class="module-viewer-body">
+      <div id="moduleLoading" class="module-loading"><div class="loading-spinner"></div><strong>Loading module…</strong><span id="moduleLoadingUrl"></span></div>
+      <webview id="moduleWebview" class="module-webview" partition="persist:krc-modules" allowpopups></webview>
+    </div>
+  </section>
+
+  <div id="modal" class="modal hidden"><div id="modalCard" class="modal-card"><button id="closeModal" class="modal-close">×</button><div id="modalContent"></div></div></div>
+
+  <div id="saveCredentialsPrompt" class="credentials-prompt hidden" role="dialog" aria-modal="true" aria-labelledby="saveCredentialsTitle">
+    <div class="credentials-prompt-card">
+      <div class="credentials-prompt-icon">✓</div>
+      <div>
+        <span class="section-kicker">LOGIN PREFERENCE</span>
+        <h3 id="saveCredentialsTitle">Save your login details?</h3>
+        <p>Your username and password can be saved on this device so you don't have to type them again next time.</p>
+      </div>
+      <div class="credentials-prompt-actions">
+        <button type="button" id="skipSaveCredentials" class="action-btn">Not now</button>
+        <button type="button" id="saveCredentialsBtn" class="primary-btn">Save Login</button>
+      </div>
+    </div>
+  </div>
+  <script src="/js/app.js"></script>
+</body>
+</html>
