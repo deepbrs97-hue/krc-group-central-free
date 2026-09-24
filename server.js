@@ -95,19 +95,19 @@ async function initDatabase() {
     console.log(`Central admin created: ${adminUsername}`);
   }
 
-  const seeded = await pool.query("SELECT value FROM system_settings WHERE key = 'initial_modules_seeded'");
-  if (seeded.rowCount === 0) {
-    const moduleCount = Number((await pool.query("SELECT COUNT(*) AS count FROM modules")).rows[0].count);
-    if (moduleCount === 0) {
-      for (const module of defaultModules) {
-        await pool.query(
-          "INSERT INTO modules (name, slug, category, icon, url, active) VALUES ($1, $2, $3, $4, $5, TRUE) ON CONFLICT DO NOTHING",
-          module
-        );
-      }
-    }
-    await pool.query("INSERT INTO system_settings (key, value) VALUES ('initial_modules_seeded', '1') ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value");
+  // Keep the default catalogue self-healing. Older deployments could have
+  // recorded the seed flag before the 16 modules were inserted. On every
+  // startup, add any missing default module without overwriting admin edits.
+  for (const module of defaultModules) {
+    await pool.query(
+      "INSERT INTO modules (name, slug, category, icon, url, active) VALUES ($1, $2, $3, $4, $5, TRUE) ON CONFLICT (name) DO NOTHING",
+      module
+    );
   }
+
+  await pool.query(
+    "INSERT INTO system_settings (key, value) VALUES ('initial_modules_seeded', '1') ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value"
+  );
 }
 
 function q(text, params = []) { return pool.query(text, params); }
